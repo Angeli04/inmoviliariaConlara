@@ -51,60 +51,63 @@ namespace InmobiliariaConlara.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Administrador")]
-        // POST: Usuario/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(Usuario u)
-        {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Roles = Usuario.ObtenerRoles();
-                return View();
-            }
+[Authorize(Roles = "Administrador")]
+[HttpPost]
+[ValidateAntiForgeryToken]
+public ActionResult Create(Usuario u)
+{
+    if (!ModelState.IsValid)
+    {
+        ViewBag.Roles = Usuario.ObtenerRoles();
+        return View();
+    }
 
-            //  Generar salt fijo
-            byte[] saltBytes = Encoding.ASCII.GetBytes(GlobalSalt);
+    //  Generar salt fijo
+    byte[] saltBytes = Encoding.ASCII.GetBytes(GlobalSalt);
 
-            //  Hashear contraseña
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: u.Clave,
-                salt: saltBytes,
-                prf: KeyDerivationPrf.HMACSHA1,
-                iterationCount: 10000,
-                numBytesRequested: 256 / 8));
-            u.Clave = hashed;
+    //  Hashear contraseña
+    string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+        password: u.Clave,
+        salt: saltBytes,
+        prf: KeyDerivationPrf.HMACSHA1,
+        iterationCount: 10000,
+        numBytesRequested: 256 / 8));
+    u.Clave = hashed;
 
-            //  Asignar rol si no es administrador
-            u.Rol = User.IsInRole("Administrador") ? u.Rol : (int)enRoles.Empleado;
+    //  Asignar rol de forma segura
+    if (!User.IsInRole("Administrador"))
+    {
+        u.Rol = (int)enRoles.Empleado;
+    }
 
-            //  Guardar usuario
-            int res = repositorio.Alta(u);
+    //  Guardar usuario
+    int res = repositorio.Alta(u);
 
-            //  Procesar avatar
-            string wwwPath = environment.WebRootPath;
-            string uploadPath = Path.Combine(wwwPath, "Uploads");
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
+    //  Procesar avatar
+    string wwwPath = environment.WebRootPath;
+    string uploadPath = Path.Combine(wwwPath, "Uploads");
+    if (!Directory.Exists(uploadPath))
+        Directory.CreateDirectory(uploadPath);
 
-            if (u.AvatarFile != null && u.IdUsuario > 0)
-            {
-                string fileName = "avatar_" + u.IdUsuario + Path.GetExtension(u.AvatarFile.FileName);
-                string pathCompleto = Path.Combine(uploadPath, fileName);
-                using (FileStream stream = new FileStream(pathCompleto, FileMode.Create))
-                    u.AvatarFile.CopyTo(stream);
+    if (u.AvatarFile != null && u.IdUsuario > 0)
+    {
+        string fileName = "avatar_" + u.IdUsuario + Path.GetExtension(u.AvatarFile.FileName);
+        string pathCompleto = Path.Combine(uploadPath, fileName);
+        using (FileStream stream = new FileStream(pathCompleto, FileMode.Create))
+            u.AvatarFile.CopyTo(stream);
 
-                u.Avatar = Path.Combine("/Uploads", fileName);
-                repositorio.Modificacion(u);
-            }
-            else if (u.IdUsuario > 0)
-            {
-                u.Avatar = "/Uploads/avatar_0.png"; // imagen por defecto
-                repositorio.Modificacion(u);
-            }
+        u.Avatar = Path.Combine("/Uploads", fileName);
+        repositorio.Modificacion(u);
+    }
+    else if (u.IdUsuario > 0)
+    {
+        u.Avatar = "/Uploads/avatar_0.png"; // imagen por defecto
+        repositorio.Modificacion(u);
+    }
 
-            return RedirectToAction(nameof(Index));
-        }
+    return RedirectToAction(nameof(Index));
+}
+
 
         [Authorize(Roles = "Administrador")]
         // GET: Usuarios/Edit/5
