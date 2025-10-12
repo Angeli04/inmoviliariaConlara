@@ -101,19 +101,8 @@ namespace InmobiliariaConlara.Controllers
 
             var token = GenerarToken(user);
 
-            return Ok(new
-            {
-                token,
-                usuario = new
-                {
-                    user.IdUsuario,
-                    user.Nombre,
-                    user.Apellido,
-                    user.Email,
-                    user.Rol,
-                    user.RolNombre
-                }
-            });
+            // 🔹 Solo devolvemos el token como string
+            return Ok(token);
         }
 
         // ----------------- MÉTODO AUXILIAR JWT -----------------
