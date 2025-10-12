@@ -89,7 +89,7 @@ namespace InmobiliariaConlara.Controllers
         // ----------------- LOGIN API MÓVIL -----------------
         [HttpPost("api/login")]
         [AllowAnonymous]
-        public IActionResult ApiLogin([FromBody] LoginRequest request)
+        public IActionResult ApiLogin([FromForm] LoginRequest request)
         {
             var user = repositorio.Login(request.Email, request.Password);
             if (user == null)
