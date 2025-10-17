@@ -92,7 +92,7 @@ namespace Inmobiliaria.Models
             IList<Inquilino> res = new List<Inquilino>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                string sql = @"SELECT IdInquilino, Nombre, Apellido, Dni, Telefono, eMail FROM inquilino, WHERE existe=1";
+                string sql = @"SELECT IdInquilino, Nombre, Apellido, Dni, Telefono, eMail FROM inquilino WHERE existe=1";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();

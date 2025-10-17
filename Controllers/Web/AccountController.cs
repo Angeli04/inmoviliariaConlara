@@ -1,138 +1,84 @@
+using System.Security.Claims;
+using InmobiliariaConlara.Models; // Asegúrate que el namespace sea el correcto
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text;
-using InmobiliariaConlara.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Mvc;
 
-namespace InmobiliariaConlara.Controllers
+namespace InmobiliariaConlara.Controllers.Web // O el namespace que estés usando
 {
+    // 1. Se establece la ruta base para este controlador como "/Account"
+    [Route("Account")]
     public class AccountController : Controller
     {
-        private readonly RepositorioUsuario repositorio;
-        private readonly IConfiguration _config;
-        private const string GlobalSalt = "MiSaltSecreto123";
+        private readonly RepositorioUsuario _repositorioUsuario;
 
-        public AccountController(RepositorioUsuario repo, IConfiguration config)
+        public AccountController(RepositorioUsuario repositorio)
         {
-            repositorio = repo;
-            _config = config;
+            _repositorioUsuario = repositorio;
         }
 
-        // ----------------- LOGIN WEB -----------------
-        [HttpGet]
+        // 2. Esta acción responde a GET /Account/Login
+        [HttpGet("Login")]
+        [AllowAnonymous]
         public IActionResult Login(string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-            return View();
+            return View(); // Esto busca la vista en /Views/Account/Login.cshtml
         }
 
-        [HttpPost]
-        public async Task<IActionResult> Login(string email, string password)
+        // 3. Esta acción responde a POST /Account/Login
+        [HttpPost("Login")]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login([FromForm] string email, [FromForm] string password, string returnUrl = null)
         {
-            var user = repositorio.Login(email, password);
+            // Validar que los datos no estén vacíos
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                ModelState.AddModelError("", "Email y contraseña son requeridos.");
+                return View();
+            }
+
+            var user = _repositorioUsuario.Login(email, password);
 
             if (user == null)
             {
-                ViewBag.Error = "Credenciales inválidas";
+                ModelState.AddModelError("", "Credenciales inválidas");
                 return View();
             }
 
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.Email),
-                new Claim(ClaimTypes.Role, user.Rol == 1 ? "Administrador" :
-                                         user.Rol == 2 ? "Empleado" : "Propietario"),
-                new Claim("UserId", user.IdUsuario.ToString())
+                new Claim(ClaimTypes.Role, user.RolNombre),
+                new Claim(ClaimTypes.NameIdentifier, user.IdUsuario.ToString())
             };
 
-            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var principal = new ClaimsPrincipal(identity);
-
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                principal,
-                new AuthenticationProperties
-                {
-                    IsPersistent = true,
-                    ExpiresUtc = DateTime.UtcNow.AddMinutes(30)
-                });
+                new ClaimsPrincipal(claimsIdentity));
 
-            return RedirectToAction("Index", "Home");
-        }
-
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Logout()
-        {
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login", "Account");
-        }
-
-        public IActionResult Perfil()
-        {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email))
-                return RedirectToAction("Login");
-
-            var user = repositorio.ObtenerPorEmail(email);
-            if (user == null)
-                return RedirectToAction("Login");
-
-            return View(user);
-        }
-
-        // ----------------- LOGIN API MÓVIL -----------------
-        [HttpPost("api/login")]
-        [AllowAnonymous]
-        public IActionResult ApiLogin([FromForm] LoginRequest request)
-        {
-            var user = repositorio.Login(request.Email, request.Password);
-            if (user == null)
-                return Unauthorized(new { message = "Credenciales inválidas" });
-
-            // Solo Propietarios pueden usar la app móvil
-            if (user.Rol != (int)enRoles.Propietario)
-                return Forbid("Solo los Propietarios pueden acceder desde la app móvil");
-
-            var token = GenerarToken(user);
-
-            // 🔹 Solo devolvemos el token como string
-            return Ok(token);
-        }
-
-        // ----------------- MÉTODO AUXILIAR JWT -----------------
-        private string GenerarToken(Usuario usuario)
-        {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new[]
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
-                new Claim(JwtRegisteredClaimNames.Sub, usuario.Email),
-                new Claim("id", usuario.IdUsuario.ToString()),
-                new Claim("rol", usuario.RolNombre ?? "Propietario")
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: _config["Jwt:Issuer"],
-                audience: _config["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.Now.AddHours(4),
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return RedirectToAction("Index", "Home");
+            }
         }
-    }
 
-    // ----------------- MODELO LOGIN REQUEST -----------------
-    public class LoginRequest
-    {
-        public string Email { get; set; }
-        public string Password { get; set; }
+        // 4. Esta acción responde a POST /Account/Logout por seguridad
+        [HttpPost("Logout")]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(Login));
+        }
     }
 }

@@ -8,34 +8,33 @@
 <h3>¿Seguro que desea eliminar el inmueble?</h3>
 <div>
     <h4>Inmueble</h4>
-    
-      <hr />
+    <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.IdInmuebles)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.IdInmuebles)
         </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IdPropietario)
+
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Duenio)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IdPropietario)
+        <dd class="col-sm-10">
+            @* Muestra el nombre completo del dueño, verificando si no es nulo *@
+            @(Model.Duenio != null ? $"{Model.Duenio.Nombre} {Model.Duenio.Apellido}" : "No asignado")
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Direccion)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.Direccion)
         </dd>
-
     </dl>
     
-      
-     <form asp-action="delete" class="bg-white p-3 border rounded shadow-sm">
+    <form asp-action="delete" class="bg-white p-3 border rounded shadow-sm">
         <input type="hidden" asp-for="IdInmuebles" />
-        <input type="hidden" name="bandera" value="tu_valor" />
         <input type="submit" value="Eliminar" class="btn btn-danger" /> |
         <a asp-action="Index">Volver al listado</a>
     </form>
+</div>

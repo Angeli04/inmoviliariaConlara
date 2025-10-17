@@ -5,7 +5,8 @@
 
 <h2>Iniciar Sesión</h2>
 
-<form asp-action="Login" method="post">
+
+<form asp-controller="Account" asp-action="Login" method="post">
     <input type="email" class="form-control" placeholder="Email" name="email" required />
     <input type="password" class="form-control" placeholder="Contraseña" name="password" required />
 

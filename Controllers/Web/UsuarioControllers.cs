@@ -268,8 +268,10 @@ public ActionResult Create(Usuario u)
         public ActionResult Datos()
         {
             var u = repositorio.ObtenerPorEmail(User.Identity.Name);
-            string buffer = "Nombre;Apellido;Email" + Environment.NewLine +
-                            $"{u.Nombre};{u.Apellido};{u.Email}";
+            
+            string buffer = "Nombre;Apellido;Dni;Telefono;Email" + Environment.NewLine +
+                            $"{u.Nombre};{u.Apellido};{u.Dni};{u.Telefono};{u.Email}";
+                            
             var stream = new MemoryStream(Encoding.Unicode.GetBytes(buffer));
             var res = new FileStreamResult(stream, "text/plain") { FileDownloadName = "Datos.csv" };
             return res;
@@ -346,6 +348,35 @@ public ActionResult Create(Usuario u)
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("index", "Home");
         }
+
+        [Authorize]
+public JsonResult BuscarPropietarios(string term)
+{
+    try
+    {
+        // Llamamos a un nuevo método en el repositorio (lo crearemos en el paso 3)
+        var propietarios = repositorio.BuscarPropietariosPorFraccionNombre(term);
+        
+        // Formateamos los datos como el JavaScript los espera
+        var data = propietarios.Select(p => new {
+            id = p.IdUsuario,
+            texto = $"{p.Nombre} {p.Apellido} (DNI: {p.Dni})"
+        }).ToList();
+
+        if (data.Any())
+        {
+            return Json(new { success = true, data = data });
+        }
+        else
+        {
+            return Json(new { success = false, message = "No se encontraron propietarios." });
+        }
+        }
+        catch (Exception)
+        {
+            return Json(new { success = false, message = "Error en el servidor." });
+        }
+}
 
     }
 }

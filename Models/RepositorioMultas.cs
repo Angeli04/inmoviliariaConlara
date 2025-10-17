@@ -113,10 +113,8 @@ namespace Inmobiliaria.Models
             var res = new List<Multas>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                string sql = @"SELECT IdMulta,idContrato, fechaMulta, fechaHastaContrato, nuevaFechaHastaContrato, importeCuota, importeMulta,cuotasAdeudadas,pagada
-                            FROM multa WHERE existe=1
-                            
-                            ORDER BY fechaMulta";
+                string sql = @"SELECT IdMulta, IdContrato, fechaMulta, fechaHastaContrato, nuevaFechaHastaContrato, importeCuota, 
+                            importeMulta, cuotasAdeudadas, pagada FROM multa WHERE existe=1 AND IdMulta = @id";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     connection.Open();

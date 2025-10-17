@@ -25,7 +25,16 @@ namespace InmobiliariaConlara.Models
 		[Required(ErrorMessage = "El apellido es obligatorio")]
 		[StringLength(100, ErrorMessage = "El apellido no puede superar los 100 caracteres")]
 		public string? Apellido { get; set; }
+
+		[Required(ErrorMessage = "El DNI es obligatorio")]
+		[Display(Name = "DNI")]
+		public string? Dni { get; set; }
+
+		[Display(Name = "Teléfono")]
+		public string? Telefono { get; set; }
+
 		[Required, EmailAddress]
+		[Column("email")]
 		public string? Email { get; set; }
 		[Required, DataType(DataType.Password)]
 		public string? Clave { get; set; }

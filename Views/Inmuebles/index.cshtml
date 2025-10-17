@@ -1,144 +1,60 @@
 @model IEnumerable<Inmobiliaria.Models.Inmuebles>
 @{
-	ViewData["Title"] = "Inmuebles";
+    ViewData["Title"] = "Inmuebles";
 }
 
 <h1>
-	Inmuebles
-	<div class="btn-group pull-right">
-		<a class="btn btn-primary" asp-action="Create" title="Crear">Crear Inmueble<i class="fa-solid fa-plus"></i></a>
-	</div>
-	<div class="btn-group pull-right">
-		<a class="btn btn-info" asp-action="Habilitados" title="VerHabilitados">Ver Inmuebles Habilitados<i class="fa-solid fa-filter"></i></a>
-	</div>
-	<div class="btn-group pull-right">
-		<a class="btn btn-info" asp-action="Index" title="VerListaCompleta">Ver Lista Completa<i class="fa-solid fa-table-list"></i></a>
-	</div>
-	<div class="btn-group pull-right">
-    <!-- Botón que muestra/oculta el formulario -->
-    <button class="btn btn-info" type="button" data-bs-toggle="collapse" data-bs-target="#formFiltroFechas" aria-expanded="false" aria-controls="formFiltroFechas">
-        Buscar Desocupados <i class="fa-solid fa-calendar-days"></i>
-    </button>
-</div>
-
-<!-- Formulario oculto que se despliega -->
-<div class="collapse  @(ViewData.ModelState.ErrorCount > 0 ? "show" : "")  mt-3" id="formFiltroFechas">
-    <div class="card card-body">
-        <form asp-action="BuscarDesocupados" method="post">
-            <div class="form-group">
-                <label for="fechaDesde">Fecha Desde</label>
-                <input type="date" class="form-control" id="fechaDesde" name="fechaDesde" required />
-            </div>
-            <div class="form-group mt-2">
-                <label for="fechaHasta">Fecha Hasta</label>
-                <input type="date" class="form-control" id="fechaHasta" name="fechaHasta" required />
-            </div>
-			<div class="text-danger mt-2" id="erroresFechas">
-                @Html.ValidationSummary(false, "", new { @class = "text-danger" })
-            </div>
-            <div class="mt-3">
-                <button type="submit" class="btn btn-success">
-                    Buscar <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                <button type="button" id="btnCancelar" class="btn btn-secondary" data-bs-toggle="collapse" data-bs-target="#formFiltroFechas">
-                    Cancelar
-                </button>
-            </div>
-        </form>
+    Inmuebles
+    <div class="btn-group pull-right">
+        <a class="btn btn-primary" asp-action="Create" title="Crear">Crear Inmueble<i class="fa-solid fa-plus"></i></a>
     </div>
-</div>
-</h1>
-@section Scripts {
-<script>
-    document.getElementById("btnCancelar").addEventListener("click", function() {
-        // Limpiar el ValidationSummary
-        document.getElementById("erroresFechas").innerHTML = "";
-    });
-</script>
-}
-<table class="table table-striped">
-	<thead>
-		<tr>
-			<th>
-				@Html.DisplayNameFor(model => model.IdInmuebles)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Direccion)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Ambientes)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Superficie)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Latitud)
-			</th>
-			<th>
-				@Html.DisplayNameFor(model => model.Longitud)
-			</th>
-            <th>
-				@Html.DisplayNameFor(model => model.Duenio)
-			</th>
-            <th>
-				@Html.DisplayNameFor(model => model.TipoInmueble)
-			</th>
-            <th>
-                @Html.DisplayNameFor(model => model.Precio)
-			<th>
-              <th>
-                @Html.DisplayNameFor(model => model.Habilitado)
-			<th>    
-		</tr>
-	</thead>
-	<tbody>
-		@foreach (var item in Model)
-		{
-			<tr>
-				<td>
-					@Html.DisplayFor(modelItem => item.IdInmuebles)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.Direccion)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.Ambientes)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.Superficie)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.Latitud)
-				</td>
-				<td>
-					@Html.DisplayFor(modelItem => item.Longitud)
-				</td>
-				<td>
-				     @(item.Duenio != null ? item.Duenio.ToString() : "Sin propietario")
-				</td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.TipoInmueble)
-				<td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Precio)
-				<td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Habilitado)
-				<td>        
+    </h1>
 
-					<div class="btn-group" role="group">
-						<a class="btn btn-primary" asp-action="Edit" asp-route-id="@item.IdInmuebles" title="Editar">
-							<i class="fa-solid fa-pen"></i>
-						</a>
-						@if(User.IsInRole("Administrador")){
-						<a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.IdInmuebles" title="Eliminar">
-							<i class="fa-solid fa-trash-can"></i>
-						</a>
-						}
-						
-					</div>
-				</td>
-			</tr>
-		}
-	</tbody>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().IdInmuebles)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Direccion)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Ambientes)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Superficie)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Latitud)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Longitud)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Duenio)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().TipoInmueble)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Precio)</th>
+            <th>@Html.DisplayNameFor(model => model.FirstOrDefault().Habilitado)</th>
+            <th></th> </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.IdInmuebles)</td>
+                <td>@Html.DisplayFor(modelItem => item.Direccion)</td>
+                <td>@Html.DisplayFor(modelItem => item.Ambientes)</td>
+                <td>@Html.DisplayFor(modelItem => item.Superficie)</td>
+                <td>@Html.DisplayFor(modelItem => item.Latitud)</td>
+                <td>@Html.DisplayFor(modelItem => item.Longitud)</td>
+                <td>
+                    @(item.Duenio != null ? $"{item.Duenio.Nombre} {item.Duenio.Apellido}" : "Sin propietario")
+                </td>
+                <td>@Html.DisplayFor(modelItem => item.TipoInmueble)</td>
+                <td>@Html.DisplayFor(modelItem => item.Precio)</td>
+                <td>@Html.DisplayFor(modelItem => item.Habilitado)</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@item.IdInmuebles" title="Editar">
+                            <i class="fa-solid fa-pen"></i>
+                        </a>
+                        @if (User.IsInRole("Administrador"))
+                        {
+                            <a class="btn btn-danger" asp-action="Delete" asp-route-id="@item.IdInmuebles" title="Eliminar">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
 </table>

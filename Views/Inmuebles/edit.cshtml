@@ -7,110 +7,84 @@
 <h4>Editar Inmueble</h4>
 <hr />
 <div class="row">
-	<div class="col-md-4 bg-white p-3 border rounded shadow-sm">
-		<form asp-action="Edit">
-			<div asp-validation-summary="ModelOnly" class="text-danger"></div>
-			<input type="hidden" name="IdInmuebles" value="@Model.IdInmuebles" />
-			
-			<div class="form-group">
-				<label asp-for="Direccion" class="control-label"></label>
-				<input asp-for="Direccion" class="form-control" />
-				<span asp-validation-for="Direccion" class="text-danger"></span>
-			</div>
+    <div class="col-md-4 bg-white p-3 border rounded shadow-sm">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" name="IdInmuebles" value="@Model.IdInmuebles" />
+            
             <div class="form-group">
-				<label asp-for="Ambientes" class="control-label"></label>
-				<input asp-for="Ambientes" class="form-control" />
-				<span asp-validation-for="Ambientes" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Superficie" class="control-label"></label>
-				<input asp-for="Superficie" class="form-control" />
-				<span asp-validation-for="Superficie" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Latitud" class="control-label"></label>
-				<input asp-for="Latitud" class="form-control" />
-				<span asp-validation-for="Latitud" class="text-danger"></span>
-			</div>
-			<div class="form-group">
-				<label asp-for="Longitud" class="control-label"></label>
-				<input asp-for="Longitud" class="form-control" />
-				<span asp-validation-for="Longitud" class="text-danger"></span>
-			</div>
-             <div class="form-group">
-                <label asp-for="Precio" class="control-label"></label>
-                <input asp-for="Precio" class="form-control" />
-                <span asp-validation-for="Precio" class="text-danger"></span>
-            </div>
-             <div class="form-group">
-				<label class="control-label">Tipo Inmueble</label>
-				<select class="form-control" name="IdTipoInmueble">
-                    <option value="@Model.IdTipoInmueble" selected="selected">@Model.TipoInmueble</option>
-					@foreach (var item in tiposInmuebles)
+                <label class="control-label">Tipo Inmueble</label>
+                <select class="form-control" name="IdTipoInmueble">
+                    @* Se usa un SelectList en el controlador para manejar la selección *@
+                    @foreach (var item in tiposInmuebles)
                     {
-                        <option value="@item.IdTipoInmueble">@item.Nombre</option>
-
+                        <option value="@item.IdTipoInmueble" selected="@(item.IdTipoInmueble == Model.IdTipoInmueble)">@item.Nombre</option>
                     }
-				
-				</select>
-				<span asp-validation-for="IdTipoInmueble" class="text-danger"></span>
-			</div>
-            <div class="form-group">
-                    <label class="control-label">Propietario</label>
-                    <input type="text" id="propietarioInput" class="form-control"  value="@(Model.Duenio != null ? Model.Duenio.ToString() :"")"  list="propietariosList" autocomplete="off" />
-                    <datalist id="propietariosList"></datalist>
-                    <!-- Campo oculto para enviar el ID -->
-                    <input type="hidden" id="IdPropietario" name="IdPropietario"value="@Model.IdPropietario" />
-                    <p id="pNoEncontradoPropietario"class="text-danger"></p>
+                </select>
+                <span asp-validation-for="IdTipoInmueble" class="text-danger"></span>
             </div>
 
-                        <script>
-                            document.getElementById("propietarioInput").addEventListener("input", function () {
-                                let valor = this.value;
-                                
-                                if (valor.length >= 3&&valor.length<6) {
-                                    fetch(`/Propietarios/BuscarPropietarioPorFraccionApellido?term=${valor}`)
-                                        .then(r => r.json())
-                                        .then(data => {
-                                            let dl = document.getElementById("propietariosList");
-                                            dl.innerHTML = "";
-                                            let pNoEncontrado=document.getElementById("pNoEncontradoPropietario");  
-                                            pNoEncontrado.innerText="";
-                                            if (data.success) {
-                                                
-                                                data.data.forEach(p => {
-                                                    let option = document.createElement("option");
-                                                    option.value = p.texto;   // se muestra Nombre Apellido (DNI)
-                                                    option.dataset.id = p.id; // guardamos el ID
-                                                    dl.appendChild(option);
-                                                });
-                                            }else{
-                                                pNoEncontrado.innerText=data.message;
-                                            }
-                                        });
-                                }
-                            });
+            <div class="form-group">
+                <label class="control-label">Propietario</label>
+                
+                <input type="text" id="propietarioInput" class="form-control" value="@(Model.Duenio != null ? $"{Model.Duenio.Nombre} {Model.Duenio.Apellido} (DNI: {Model.Duenio.Dni})" : "")" list="propietariosList" autocomplete="off" />
+                <datalist id="propietariosList"></datalist>
+                
+                <input type="hidden" id="IdUsuario" name="IdUsuario" value="@Model.IdUsuario" />
+                
+                <p id="pNoEncontradoPropietario" class="text-danger"></p>
+            </div>
 
-                            document.getElementById("propietarioInput").addEventListener("change", function () {
-                                let valor = this.value;
-                                let dl = document.getElementById("propietariosList").options;
-                                for (let i = 0; i < dl.length; i++) {
-                                    if (dl[i].value === valor) {
-                                        document.getElementById("IdPropietario").value = dl[i].dataset.id;
-                                    }
+            <script>
+                document.getElementById("propietarioInput").addEventListener("input", function () {
+                    let valor = this.value;
+                    let pNoEncontrado = document.getElementById("pNoEncontradoPropietario");
+                    pNoEncontrado.textContent = "";
+
+                    if (valor.length >= 3 && valor.length < 10) {
+                        // CAMBIO: Apuntamos al UsuarioController
+                        fetch(`/Usuario/BuscarPropietarios?term=${valor}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                let dl = document.getElementById("propietariosList");
+                                dl.innerHTML = "";
+                                if (data.success) {
+                                    data.data.forEach(p => {
+                                        let option = document.createElement("option");
+                                        option.value = p.texto;
+                                        option.dataset.id = p.id;
+                                        dl.appendChild(option);
+                                    });
+                                } else {
+                                    pNoEncontrado.textContent = data.message;
                                 }
                             });
-                        </script>
-             <div class="form-group form-check">
-                <input asp-for="Habilitado" class="form-check-input  border border-dark " />
+                    }
+                });
+
+                document.getElementById("propietarioInput").addEventListener("change", function () {
+                    let valor = this.value;
+                    let dl = document.getElementById("propietariosList").options;
+                    // Limpiar el ID si no se selecciona nada válido
+                    document.getElementById("IdUsuario").value = ""; 
+                    for (let i = 0; i < dl.length; i++) {
+                        if (dl[i].value === valor) {
+                            // CAMBIO: Asignamos el valor al input correcto
+                            document.getElementById("IdUsuario").value = dl[i].dataset.id;
+                            break;
+                        }
+                    }
+                });
+            </script>
+            <div class="form-group form-check">
+                <input asp-for="Habilitado" class="form-check-input border border-dark" />
                 <label asp-for="Habilitado" class="form-check-label"></label>
                 <span asp-validation-for="Habilitado" class="text-danger"></span>
             </div>
-                
-          
-			<div class="form-group">
-				<input type="submit" value="Guardar" class="btn btn-primary" />
-			</div>
-		</form>
-	</div>
+            
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
 </div>
