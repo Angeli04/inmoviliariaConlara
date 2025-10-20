@@ -128,6 +128,38 @@ namespace InmobiliariaConlara.Models
             return res;
         }
 
+        public int ActualizarPerfilDesdeApp(Usuario usuario)
+    {
+        int resultado = -1;
+        using (var connection = new MySqlConnection(connectionString)) // Usa tu cadena de conexión
+        {
+            // La consulta SQL solo actualiza los campos que nos interesan.
+            // Ignoramos 'Clave', 'Rol', 'Dni', etc.
+            string sql = @"UPDATE usuario 
+                           SET nombre = @nombre, 
+                               apellido = @apellido, 
+                               telefono = @telefono, 
+                               eMail = @email,
+                               dni = @dni
+                           WHERE idUsuario = @idUsuario";
+            
+            using (var command = new MySqlCommand(sql, connection))
+            {
+                command.Parameters.AddWithValue("@nombre", usuario.Nombre);
+                command.Parameters.AddWithValue("@apellido", usuario.Apellido);
+                command.Parameters.AddWithValue("@telefono", usuario.Telefono);
+                command.Parameters.AddWithValue("@email", usuario.Email);
+                command.Parameters.AddWithValue("@dni", usuario.Dni);
+                command.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
+                
+                connection.Open();
+                resultado = command.ExecuteNonQuery();
+                connection.Close();
+            }
+        }
+        return resultado;
+    }
+
         // <-- NUEVO MÉTODO ESENCIAL -->
         public IList<Usuario> ObtenerPropietarios()
         {

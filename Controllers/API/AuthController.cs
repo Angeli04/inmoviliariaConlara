@@ -11,7 +11,7 @@ namespace InmobiliariaConlara.Controllers.API
 {
     [ApiController]
     // 1. CAMBIO DE RUTA: Ahora la ruta base será /api/Auth
-    [Route("api/[controller]")] 
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase // 2. CAMBIO DE NOMBRE
     {
         private readonly RepositorioUsuario _repositorioUsuario;
@@ -51,6 +51,7 @@ namespace InmobiliariaConlara.Controllers.API
             }
         }
 
+        // ruta: /api/Auth/perfil
         [HttpGet("perfil")]
         [Authorize(Policy = "EsPropietarioApp")]
         public IActionResult Perfil()
@@ -109,6 +110,42 @@ namespace InmobiliariaConlara.Controllers.API
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+
+        // ruta: /api/Auth/actualizar
+        [HttpPost("actualizar")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult Actualizar([FromBody] Usuario usuarioActualizado)
+        
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized();
+                }
+
+                int idUsuario = Convert.ToInt32(userIdClaim.Value);
+
+                usuarioActualizado.IdUsuario = idUsuario;
+
+                int resultado = _repositorioUsuario.ActualizarPerfilDesdeApp(usuarioActualizado);
+
+                if (resultado > 0)
+                {
+                    return Ok(usuarioActualizado);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch
+            {
+                return StatusCode(500, new { message = "Ocurrió un error inesperado." });
+            }
         }
     }
 }
