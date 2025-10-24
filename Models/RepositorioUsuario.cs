@@ -113,7 +113,7 @@ namespace InmobiliariaConlara.Models
                             IdUsuario = reader.GetInt32("IdUsuario"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Dni = reader.GetString("Dni"), // <-- CAMBIO
+                            Dni = reader.GetInt32("Dni"), // <-- CAMBIO
                             Telefono = reader.GetString("Telefono"), // <-- CAMBIO
                             Email = reader.GetString("eMail"),
                             Clave = reader.GetString("clave"),
@@ -181,7 +181,7 @@ namespace InmobiliariaConlara.Models
                             IdUsuario = reader.GetInt32("IdUsuario"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Dni = reader.GetString("Dni"),
+                            Dni = reader.GetInt32("Dni"),
                             Telefono = reader.GetString("Telefono"),
                             Email = reader.GetString("eMail"),
                         };
@@ -214,7 +214,7 @@ namespace InmobiliariaConlara.Models
                             IdUsuario = reader.GetInt32("IdUsuario"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Dni = reader.GetString("Dni"), // <-- CAMBIO
+                            Dni = reader.GetInt32("Dni"), // <-- CAMBIO
                             Telefono = reader.GetString("Telefono"), // <-- CAMBIO
                             Email = reader.GetString("eMail"),
                             Clave = reader.GetString("clave"),
@@ -249,7 +249,7 @@ namespace InmobiliariaConlara.Models
                             IdUsuario = reader.GetInt32("IdUsuario"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Dni = reader.GetString("Dni"), // <-- CAMBIO
+                            Dni = reader.GetInt32("Dni"), // <-- CAMBIO
                             Telefono = reader.GetString("Telefono"), // <-- CAMBIO
                             Email = reader.GetString("eMail"),
                             Clave = reader.GetString("clave"),
@@ -335,7 +335,7 @@ namespace InmobiliariaConlara.Models
                             IdUsuario = reader.GetInt32("IdUsuario"),
                             Nombre = reader.GetString("Nombre"),
                             Apellido = reader.GetString("Apellido"),
-                            Dni = reader.GetString("Dni"),
+                            Dni = reader.GetInt32("Dni"),
                         };
                         res.Add(u);
                     }

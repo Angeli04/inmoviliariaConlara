@@ -28,7 +28,7 @@ namespace InmobiliariaConlara.Models
 
 		[Required(ErrorMessage = "El DNI es obligatorio")]
 		[Display(Name = "DNI")]
-		public string? Dni { get; set; }
+		public int? Dni { get; set; }
 
 		[Display(Name = "Teléfono")]
 		public string? Telefono { get; set; }
