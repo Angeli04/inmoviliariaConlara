@@ -1,7 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using InmobiliariaConlara.Models; // Asegúrate que el namespace sea el correcto
+using Inmobiliaria.Models;
+using InmobiliariaConlara.Models; 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -10,17 +11,20 @@ using Microsoft.IdentityModel.Tokens;
 namespace InmobiliariaConlara.Controllers.API
 {
     [ApiController]
-    // 1. CAMBIO DE RUTA: Ahora la ruta base será /api/Auth
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase // 2. CAMBIO DE NOMBRE
+    public class AuthController : ControllerBase 
     {
         private readonly RepositorioUsuario _repositorioUsuario;
         private readonly IConfiguration _configuration;
 
-        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration)
+        private readonly RepositorioInmuebles _repositorioInmuebles;
+
+
+        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles)
         {
             _repositorioUsuario = repositorioUsuario;
             _configuration = configuration;
+            _repositorioInmuebles = repositorioInmuebles;
         }
 
         // ruta: /api/Auth/login
@@ -81,6 +85,42 @@ namespace InmobiliariaConlara.Controllers.API
 
             return Ok(perfil);
         }
+
+        // ruta: /api/Auth/listarInmuebles
+        [HttpGet("listarInmuebles")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult ListarInmuebles()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            var idUsuario = Convert.ToInt32(userIdClaim.Value);
+            var inmuebles = _repositorioInmuebles.ObtenerInmueblesCompletosPorPropietario(idUsuario);
+
+            return Ok(inmuebles);
+        }
+
+        [HttpGet("listarInmueblesCompletos")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult ListarInmueblesCompletos()
+        { 
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            var idUsuario = Convert.ToInt32(userIdClaim.Value);
+            var inmuebles = _repositorioInmuebles.ObtenerInmueblesCompletosPorIdApi(idUsuario);
+
+            return Ok(inmuebles);
+
+        }
+
+        
 
         private string GenerarToken(Usuario usuario)
         {

@@ -27,7 +27,7 @@ namespace Inmobiliaria.Models // O InmobiliariaConlara.Models
     [Required(ErrorMessage = "La longitud es obligatoria")]
     public decimal Longitud { get; set; }
 
-    // --- CAMBIOS AQUÍ ---
+
     [Display(Name = "Dueño")]
     [Required(ErrorMessage = "El propietario es obligatorio")]
     [ForeignKey(nameof(Duenio))] // Crea la relación con el objeto 'Duenio'
@@ -35,7 +35,7 @@ namespace Inmobiliaria.Models // O InmobiliariaConlara.Models
 
     [Display(Name = "Dueño")]
     public Usuario? Duenio { get; set; } // Cambiamos el tipo de Propietario a Usuario
-    // --- FIN DE LOS CAMBIOS ---
+
 
     [Display(Name = "Tipo de Inmueble")]
     [Required(ErrorMessage = "El tipo de inmueble es obligatorio")]
@@ -52,5 +52,9 @@ namespace Inmobiliaria.Models // O InmobiliariaConlara.Models
     
     [Required]
     public bool Existe { get; set; }
+
+    [Display(Name = "ImagenUrl")]
+    public string? ImagenUrl { get; set; }
+
   }
 }
