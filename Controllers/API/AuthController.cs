@@ -106,7 +106,7 @@ namespace InmobiliariaConlara.Controllers.API
         [HttpGet("listarInmueblesCompletos")]
         [Authorize(Policy = "EsPropietarioApp")]
         public IActionResult ListarInmueblesCompletos()
-        { 
+        {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
             {
@@ -120,7 +120,19 @@ namespace InmobiliariaConlara.Controllers.API
 
         }
 
-        
+        //ruta: /api/Auth/Habilitacion
+        [HttpPut("Habilitacion")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult Habilitacion([FromBody] Inmuebles inmueble)
+        {
+            bool habilitado = inmueble.Habilitado;
+
+            int id = inmueble.IdInmuebles;
+            Inmuebles inmuebleActualizado = _repositorioInmuebles.Habilitar(id, habilitado);
+
+
+            return Ok(inmuebleActualizado);
+        }
 
         private string GenerarToken(Usuario usuario)
         {

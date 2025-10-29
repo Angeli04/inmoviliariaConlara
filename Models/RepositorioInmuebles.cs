@@ -490,6 +490,30 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
             return inmueble;
         }
 
+        // cambiar Estado
+        public Inmuebles Habilitar(int id, bool habilitado){
+
+
+
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                String sql = @"UPDATE Inmuebles SET Habilitado = @habilitado WHERE IdInmuebles = @id";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@id", id);
+                    command.Parameters.AddWithValue("@habilitado", habilitado);
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                    connection.Close();
+                }
+            }
+            Inmuebles inmueble = ObtenerPorId(id);
+            return inmueble;
+        }
+
+    
+
 
 
     }
