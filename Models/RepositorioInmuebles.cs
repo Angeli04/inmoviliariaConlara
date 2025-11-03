@@ -17,42 +17,51 @@ namespace Inmobiliaria.Models
         }
 
         public int Alta(Inmuebles inmueble)
+{
+    int res = -1;
+    using (var connection = new MySqlConnection(connectionString))
+    {
+        string sql = @"INSERT INTO Inmuebles
+                       (Direccion, Ambientes, Superficie, Latitud, Longitud, 
+                        IdUsuario, IdTipoInmueble, Precio, Habilitado, Existe, 
+                        ImagenUrl) -- 1. AÑADIR LA COLUMNA AQUÍ
+                       VALUES
+                       (@direccion, @ambientes, @superficie, @latitud, @longitud, 
+                        @idUsuario, @idTipoInmueble, @precio, @habilitado, @existe,
+                        @imagenUrl); -- 2. AÑADIR EL PARÁMETRO AQUÍ
+                       SELECT LAST_INSERT_ID();";
+        
+        using (var command = new MySqlCommand(sql, connection))
         {
-            int res = -1;
-            using (var connection = new MySqlConnection(connectionString))
-            {
-                // <-- CAMBIO: Se actualiza idPropietario por idUsuario en la consulta
-                string sql = @"INSERT INTO Inmuebles
-                        ( direccion, ambientes, superficie, latitud, longitud, idUsuario, IdTipoInmueble, precio, habilitado, existe)
-                        VALUES ( @direccion, @ambientes, @superficie, @latitud, @longitud, @idUsuario, @IdTipoInmueble, @precio, @habilitado, @existe);
-                        SELECT LAST_INSERT_ID();";
-                using (var command = new MySqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@direccion", inmueble.Direccion);
-                    command.Parameters.AddWithValue("@ambientes", inmueble.Ambientes);
-                    command.Parameters.AddWithValue("@superficie", inmueble.Superficie);
-                    command.Parameters.AddWithValue("@latitud", inmueble.Latitud);
-                    command.Parameters.AddWithValue("@longitud", inmueble.Longitud);
-                    command.Parameters.AddWithValue("@idUsuario", inmueble.IdUsuario); // <-- CAMBIO
-                    command.Parameters.AddWithValue("@IdTipoInmueble", inmueble.IdTipoInmueble);
-                    command.Parameters.AddWithValue("@precio", inmueble.Precio);
-                    command.Parameters.AddWithValue("@habilitado", 1);
-                    command.Parameters.AddWithValue("@existe", 1);
-                    connection.Open();
-                    res = Convert.ToInt32(command.ExecuteScalar());
-                    inmueble.IdInmuebles = res; // <-- CORRECCIÓN: Asignar a IdInmuebles
-                    connection.Close();
-                }
-            }
-            return res;
+            command.Parameters.AddWithValue("@direccion", inmueble.Direccion);
+            command.Parameters.AddWithValue("@ambientes", inmueble.Ambientes);
+            command.Parameters.AddWithValue("@superficie", inmueble.Superficie); 
+            command.Parameters.AddWithValue("@latitud", inmueble.Latitud);
+            command.Parameters.AddWithValue("@longitud", inmueble.Longitud);
+            command.Parameters.AddWithValue("@idUsuario", inmueble.IdUsuario);
+            command.Parameters.AddWithValue("@idTipoInmueble", inmueble.IdTipoInmueble);
+            command.Parameters.AddWithValue("@precio", inmueble.Precio);
+            command.Parameters.AddWithValue("@habilitado", inmueble.Habilitado);
+            command.Parameters.AddWithValue("@existe", 1); 
+
+        
+            command.Parameters.AddWithValue("@imagenUrl", (object)inmueble.ImagenUrl ?? DBNull.Value);
+
+            connection.Open();
+            res = Convert.ToInt32(command.ExecuteScalar());
+            inmueble.IdInmuebles = res;
+          
         }
+    }
+    return res;
+}
 
         public int Baja(Inmuebles inmueble)
         {
             int res = -1;
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se actualiza idPropietario por idUsuario en la consulta
+                
                 string sql = @"UPDATE Inmuebles SET 
                                 direccion=@direccion, ambientes=@ambientes, superficie=@superficie, latitud=@latitud, longitud=@longitud, idUsuario=@idUsuario, IdTipoInmueble=@IdTipoInmueble, precio=@precio, habilitado=@habilitado, existe=@existe
                                 WHERE IdInmuebles = @id";
@@ -64,7 +73,7 @@ namespace Inmobiliaria.Models
                     command.Parameters.AddWithValue("@superficie", inmueble.Superficie);
                     command.Parameters.AddWithValue("@latitud", inmueble.Latitud);
                     command.Parameters.AddWithValue("@longitud", inmueble.Longitud);
-                    command.Parameters.AddWithValue("@idUsuario", inmueble.IdUsuario); // <-- CAMBIO
+                    command.Parameters.AddWithValue("@idUsuario", inmueble.IdUsuario);
                     command.Parameters.AddWithValue("@idTipoInmueble", inmueble.IdTipoInmueble);
                     command.Parameters.AddWithValue("@precio", inmueble.Precio);
                     command.Parameters.AddWithValue("@habilitado", inmueble.Habilitado);
@@ -82,7 +91,7 @@ namespace Inmobiliaria.Models
             int res = -1;
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se actualiza idPropietario por idUsuario en la consulta
+                
                 string sql = @"UPDATE Inmuebles SET 
                                 direccion=@direccion, ambientes=@ambientes, superficie=@superficie, latitud=@latitud, longitud=@longitud, idUsuario=@idUsuario, IdTipoInmueble=@IdTipoInmueble, precio=@precio, habilitado=@habilitado, existe=@existe
                                 WHERE IdInmuebles = @id";
@@ -112,7 +121,7 @@ namespace Inmobiliaria.Models
             var res = new List<Inmuebles>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se pide idUsuario y se hace JOIN para obtener el nombre del dueño.
+               
                 string sql = @"SELECT i.*, u.Nombre, u.Apellido 
                              FROM Inmuebles i 
                              JOIN Usuario u ON i.idUsuario = u.idUsuario 
@@ -156,7 +165,7 @@ namespace Inmobiliaria.Models
             Inmuebles? inmueble = null;
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se pide idUsuario y se hace JOIN para obtener el nombre del dueño.
+                
                 string sql = @"SELECT i.*, u.Nombre, u.Apellido
                              FROM Inmuebles i
                              JOIN Usuario u ON i.idUsuario = u.idUsuario
@@ -176,11 +185,11 @@ namespace Inmobiliaria.Models
                             Superficie = Convert.ToInt32(reader["Superficie"]),
                             Latitud = Convert.ToDecimal(reader["Latitud"]),
                             Longitud = Convert.ToDecimal(reader["Longitud"]),
-                            IdUsuario = Convert.ToInt32(reader["idUsuario"]), // <-- CAMBIO
+                            IdUsuario = Convert.ToInt32(reader["idUsuario"]), 
                             IdTipoInmueble = Convert.ToInt32(reader["IdTipoInmueble"]),
                             Precio = Convert.ToDecimal(reader["precio"]),
                             Habilitado = Convert.ToBoolean(reader["habilitado"]),
-                            Duenio = new Usuario // <-- CAMBIO: Se popula el objeto dueño.
+                            Duenio = new Usuario 
                             {
                                 IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                                 Nombre = reader["Nombre"].ToString(),
@@ -194,19 +203,17 @@ namespace Inmobiliaria.Models
             return inmueble;
         }
 
-        // <-- CAMBIO RADICAL EN ESTE MÉTODO -->
         public IList<Inmuebles> ObtenerPorPropietario(int idUsuario)
         {
             var res = new List<Inmuebles>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                // Se actualiza el WHERE para buscar por idUsuario
                 string sql = @"SELECT * FROM Inmuebles
                              WHERE idUsuario = @idUsuario AND existe=1
                              ORDER BY Direccion";
                 using (var command = new MySqlCommand(sql, connection))
                 {
-                    // Se actualiza el nombre del parámetro
+                    
                     command.Parameters.AddWithValue("@idUsuario", idUsuario);
                     connection.Open();
                     var reader = command.ExecuteReader();
@@ -239,7 +246,7 @@ namespace Inmobiliaria.Models
             Inmuebles? inmueble = null;
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se actualiza la columna en el SELECT y se añade JOIN
+                
                 string sql = @"SELECT i.*, u.Nombre, u.Apellido 
                      FROM Inmuebles i
                      JOIN Usuario u ON i.idUsuario = u.idUsuario
@@ -259,11 +266,11 @@ namespace Inmobiliaria.Models
                             Superficie = Convert.ToInt32(reader["Superficie"]),
                             Latitud = Convert.ToDecimal(reader["Latitud"]),
                             Longitud = Convert.ToDecimal(reader["Longitud"]),
-                            IdUsuario = Convert.ToInt32(reader["idUsuario"]), // <-- CAMBIO
+                            IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                             IdTipoInmueble = Convert.ToInt32(reader["IdTipoInmueble"]),
                             Precio = Convert.ToDecimal(reader["precio"]),
                             Habilitado = Convert.ToBoolean(reader["habilitado"]),
-                            Duenio = new Usuario // <-- Se popula el dueño
+                            Duenio = new Usuario 
                             {
                                 IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                                 Nombre = reader["Nombre"].ToString(),
@@ -283,7 +290,7 @@ namespace Inmobiliaria.Models
             IList<Inmuebles> res = new List<Inmuebles>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                // En este método no se pedían datos del propietario, así que no hay cambios.
+                
                 string sql = @"
                         SELECT IdInmuebles, Direccion, Precio, Habilitado
                         FROM Inmuebles
@@ -320,7 +327,7 @@ namespace Inmobiliaria.Models
             var res = new List<Inmuebles>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se actualiza la columna en el SELECT y se añade JOIN
+                
                 string sql = @"SELECT i.*, u.Nombre, u.Apellido 
                      FROM Inmuebles i
                      JOIN Usuario u ON i.idUsuario = u.idUsuario
@@ -340,11 +347,11 @@ namespace Inmobiliaria.Models
                             Superficie = Convert.ToInt32(reader["Superficie"]),
                             Latitud = Convert.ToDecimal(reader["Latitud"]),
                             Longitud = Convert.ToDecimal(reader["Longitud"]),
-                            IdUsuario = Convert.ToInt32(reader["idUsuario"]), // <-- CAMBIO
+                            IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                             IdTipoInmueble = Convert.ToInt32(reader["IdTipoInmueble"]),
                             Precio = Convert.ToDecimal(reader["precio"]),
                             Habilitado = Convert.ToBoolean(reader["habilitado"]),
-                            Duenio = new Usuario // <-- Se popula el dueño
+                            Duenio = new Usuario 
                             {
                                 IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                                 Nombre = reader["Nombre"].ToString(),
@@ -365,7 +372,7 @@ namespace Inmobiliaria.Models
             var res = new List<Inmuebles>();
             using (var connection = new MySqlConnection(connectionString))
             {
-                // <-- CAMBIO: Se actualiza la columna en el SELECT
+
                 string sql = @"SELECT i.IdInmuebles, i.Direccion, i.Ambientes, i.Superficie, i.Latitud, i.Longitud, i.idUsuario, i.IdTipoInmueble, i.precio, i.habilitado
                         FROM Inmuebles i
                         LEFT JOIN Contratos c 
@@ -376,9 +383,7 @@ namespace Inmobiliaria.Models
                             )
                         WHERE c.IdInmuebles IS NULL AND i.existe = 1
                         ORDER BY i.Direccion";
-                /* NOTA: Simplifiqué tu lógica de solapamiento de fechas. La condición
-                   (inicio_A <= fin_B) AND (fin_A >= inicio_B) es la forma estándar
-                   de detectar si dos rangos de tiempo se superponen. */
+
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -396,7 +401,7 @@ namespace Inmobiliaria.Models
                             Superficie = Convert.ToInt32(reader["Superficie"]),
                             Latitud = Convert.ToDecimal(reader["Latitud"]),
                             Longitud = Convert.ToDecimal(reader["Longitud"]),
-                            IdUsuario = Convert.ToInt32(reader["idUsuario"]), // <-- CAMBIO
+                            IdUsuario = Convert.ToInt32(reader["idUsuario"]),
                             IdTipoInmueble = Convert.ToInt32(reader["IdTipoInmueble"]),
                             Precio = Convert.ToDecimal(reader["precio"]),
                             Habilitado = Convert.ToBoolean(reader["habilitado"])
@@ -415,12 +420,14 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
 
     using (var connection = new MySqlConnection(connectionString))
     {
-        // Consulta SQL con los campos exactos que pediste
-        string sql = @"SELECT IdInmuebles, Direccion, Ambientes, Superficie, 
-                              Latitud, Longitud, IdTipoInmueble, 
-                              Precio, Habilitado, ImagenUrl
-                       FROM Inmuebles
-                       WHERE IdUsuario = @idPropietario";
+
+        string sql = @"SELECT i.IdInmuebles, i.Direccion, i.Ambientes, i.Superficie, 
+                              i.Latitud, i.Longitud, i.IdTipoInmueble, 
+                              t.Nombre as TipoInmueble, 
+                              i.Precio, i.Habilitado, i.ImagenUrl
+                       FROM Inmuebles i
+                       JOIN tipoinmueble t ON i.IdTipoInmueble = t.idTipoInmueble
+                       WHERE i.IdUsuario = @idPropietario";
 
         using (var command = new MySqlCommand(sql, connection))
         {
@@ -439,6 +446,7 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
                         Latitud = reader.GetDecimal("Latitud"),
                         Longitud = reader.GetDecimal("Longitud"),
                         IdTipoInmueble = reader.GetInt32("IdTipoInmueble"),
+                        TipoInmueble = reader.GetString("TipoInmueble"),                      
                         Precio = reader.GetDecimal("Precio"),
                         Habilitado = reader.GetBoolean("Habilitado"),
                         ImagenUrl = reader.IsDBNull(reader.GetOrdinal("ImagenUrl")) 
@@ -458,7 +466,7 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
             Inmuebles? inmueble = null;
             using (var connection = new MySqlConnection(connectionString))
             {
-                // Seleccionamos TODOS los campos del inmueble.
+               
                 string sql = @"SELECT idInmuebles, direccion, ambientes, superficie, latitud, longitud,
                               idTipoInmueble, precio, Habilitado, existe, ImagenUrl
                        FROM Inmuebles
@@ -470,7 +478,7 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
                     connection.Open();
                     using (var reader = command.ExecuteReader())
                     {
-                        if (reader.Read()) // Usamos 'if' porque esperamos un solo resultado
+                        if (reader.Read()) 
                         {
                             inmueble = new Inmuebles
                             {
@@ -490,12 +498,8 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
             return inmueble;
         }
 
-        // cambiar Estado
+        
         public Inmuebles Habilitar(int id, bool habilitado){
-
-
-
-
             using (var connection = new MySqlConnection(connectionString))
             {
                 String sql = @"UPDATE Inmuebles SET Habilitado = @habilitado WHERE IdInmuebles = @id";
@@ -511,10 +515,5 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
             Inmuebles inmueble = ObtenerPorId(id);
             return inmueble;
         }
-
-    
-
-
-
     }
 }

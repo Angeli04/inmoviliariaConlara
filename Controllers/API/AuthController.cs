@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using Inmobiliaria.Models;
 using InmobiliariaConlara.Models; 
 using Microsoft.AspNetCore.Authorization;
@@ -19,12 +20,20 @@ namespace InmobiliariaConlara.Controllers.API
 
         private readonly RepositorioInmuebles _repositorioInmuebles;
 
+        private readonly RepositorioTipoInmueble _repositorioTipoInmueble;
 
-        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles)
+        private readonly IWebHostEnvironment _hostingEnvironment;
+
+
+
+
+        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment)
         {
             _repositorioUsuario = repositorioUsuario;
             _configuration = configuration;
             _repositorioInmuebles = repositorioInmuebles;
+            _repositorioTipoInmueble = repositorioTipoInmueble;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         // ruta: /api/Auth/login
@@ -103,6 +112,7 @@ namespace InmobiliariaConlara.Controllers.API
             return Ok(inmuebles);
         }
 
+        // ruta: /api/Auth/listarInmueblesCompletos
         [HttpGet("listarInmueblesCompletos")]
         [Authorize(Policy = "EsPropietarioApp")]
         public IActionResult ListarInmueblesCompletos()
@@ -169,7 +179,7 @@ namespace InmobiliariaConlara.Controllers.API
         [HttpPost("actualizar")]
         [Authorize(Policy = "EsPropietarioApp")]
         public IActionResult Actualizar([FromBody] Usuario usuarioActualizado)
-        
+
         {
             try
             {
@@ -199,5 +209,69 @@ namespace InmobiliariaConlara.Controllers.API
                 return StatusCode(500, new { message = "Ocurrió un error inesperado." });
             }
         }
+
+        // ruta: /api/Auth/listarTipos
+        [HttpGet("listarTipos")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult ListarTipos()
+        {
+            var tipos = _repositorioTipoInmueble.ObtenerTodos();
+            return Ok(tipos);
+        }
+
+        // ruta: /api/Auth/altaInmueble
+        [HttpPost("altaInmueble")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public async Task<IActionResult> AltaInmuebleAsync([FromForm] IFormFile imagen, [FromForm] String inmuebleJson)
+        {
+            if (imagen == null || string.IsNullOrEmpty(inmuebleJson))
+            {
+                return BadRequest();
+            }
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                Inmuebles? inmueble = JsonSerializer.Deserialize<Inmuebles>(inmuebleJson, options);
+
+                if (inmueble == null)
+                {
+                    return BadRequest("El inmueble no es válido");
+                }
+
+                string wwwRootPath = _hostingEnvironment.WebRootPath;
+                string uploadPath = Path.Combine(wwwRootPath, "Uploads");
+
+                if (!Directory.Exists(uploadPath))
+                {
+                    Directory.CreateDirectory(uploadPath);
+                }
+
+                string extension = Path.GetExtension(imagen.FileName);
+                string nombreArchivoUnico = Guid.NewGuid().ToString() + extension;
+                string filePath = Path.Combine(uploadPath, nombreArchivoUnico);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await imagen.CopyToAsync(fileStream);
+                }
+
+                inmueble.ImagenUrl = $"/Uploads/{nombreArchivoUnico}";
+
+                var idUsuario = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                inmueble.IdUsuario = idUsuario;
+                int idCreado = _repositorioInmuebles.Alta(inmueble);
+                inmueble.IdInmuebles = idCreado;
+                return Ok(inmueble);
+            }
+            catch
+            {
+                return BadRequest();
+            }
+        }
+        
     }
 }
