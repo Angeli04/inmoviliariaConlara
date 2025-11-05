@@ -324,6 +324,7 @@ public ActionResult Create(Usuario u)
                         new Claim(ClaimTypes.Name, e.Email),
                         new Claim("FullName", e.Nombre + " " + e.Apellido),
                         new Claim(ClaimTypes.Role, e.RolNombre),
+                        new Claim(ClaimTypes.NameIdentifier, e.IdUsuario.ToString())
                     };
 
                     var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

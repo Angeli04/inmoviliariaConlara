@@ -93,7 +93,7 @@ namespace Inmobiliaria.Models
             {
                 
                 string sql = @"UPDATE Inmuebles SET 
-                                direccion=@direccion, ambientes=@ambientes, superficie=@superficie, latitud=@latitud, longitud=@longitud, idUsuario=@idUsuario, IdTipoInmueble=@IdTipoInmueble, precio=@precio, habilitado=@habilitado, existe=@existe
+                                direccion=@direccion, ambientes=@ambientes, superficie=@superficie, latitud=@latitud, longitud=@longitud, idUsuario=@idUsuario, IdTipoInmueble=@IdTipoInmueble, precio=@precio, habilitado=@habilitado, existe=@existe, ImagenUrl=@imagenUrl
                                 WHERE IdInmuebles = @id";
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -108,6 +108,7 @@ namespace Inmobiliaria.Models
                     command.Parameters.AddWithValue("@precio", inmueble.Precio);
                     command.Parameters.AddWithValue("@habilitado", inmueble.Habilitado);
                     command.Parameters.AddWithValue("@existe", 1);
+                    command.Parameters.AddWithValue("@imagenUrl", inmueble.ImagenUrl);
                     connection.Open();
                     res = command.ExecuteNonQuery();
                     connection.Close();
@@ -467,10 +468,13 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
             using (var connection = new MySqlConnection(connectionString))
             {
                
-                string sql = @"SELECT idInmuebles, direccion, ambientes, superficie, latitud, longitud,
-                              idTipoInmueble, precio, Habilitado, existe, ImagenUrl
-                       FROM Inmuebles
-                       WHERE IdInmuebles = @idInmueble";
+                string sql = @"SELECT i.IdInmuebles, i.Direccion, i.Ambientes, i.Superficie, 
+                              i.Latitud, i.Longitud, i.IdTipoInmueble, 
+                              t.Nombre as TipoInmueble, 
+                              i.Precio, i.Habilitado, i.ImagenUrl
+                       FROM Inmuebles i
+                       JOIN tipoinmueble t ON i.IdTipoInmueble = t.idTipoInmueble
+                       WHERE i.IdInmuebles = @idInmueble";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -482,14 +486,19 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
                         {
                             inmueble = new Inmuebles
                             {
-                                IdInmuebles = reader.GetInt32("idInmuebles"),
-                                Direccion = reader.GetString("direccion"),
-                                Ambientes = reader.GetInt32("ambientes"),
-                                Superficie = reader.GetInt32("superficie"),
-                                Latitud = reader.GetDecimal("latitud"),
-                                Longitud = reader.GetDecimal("longitud"),
-                                IdTipoInmueble = reader.GetInt32("idTipoInmueble"),
-
+                                IdInmuebles = reader.GetInt32("IdInmuebles"),
+                                Direccion = reader.GetString("Direccion"),
+                                Ambientes = reader.GetInt32("Ambientes"),
+                                Superficie = reader.GetInt32("Superficie"),
+                                Latitud = reader.GetDecimal("Latitud"),
+                                Longitud = reader.GetDecimal("Longitud"),
+                                IdTipoInmueble = reader.GetInt32("IdTipoInmueble"),
+                                TipoInmueble = reader.GetString("TipoInmueble"),
+                                Precio = reader.GetDecimal("Precio"),
+                                Habilitado = reader.GetBoolean("Habilitado"),
+                                ImagenUrl = reader.IsDBNull(reader.GetOrdinal("ImagenUrl"))
+                                    ? null
+                                    : reader.GetString("ImagenUrl")
                             };
                         }
                     }

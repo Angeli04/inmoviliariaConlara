@@ -314,6 +314,9 @@ namespace InmobiliariaConlara.Models
             return u;
         }
 
+        // metodo para destruir el token, logout.
+        
+
         public IList<Usuario> BuscarPropietariosPorFraccionNombre(string term)
         {
             IList<Usuario> res = new List<Usuario>();

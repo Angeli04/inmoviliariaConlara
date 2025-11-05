@@ -24,16 +24,20 @@ namespace InmobiliariaConlara.Controllers.API
 
         private readonly IWebHostEnvironment _hostingEnvironment;
 
+        private readonly RepositorioInquilino _repositorioInquilino;
 
 
 
-        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment)
+
+
+        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment, RepositorioInquilino repositorioInquilino)
         {
             _repositorioUsuario = repositorioUsuario;
             _configuration = configuration;
             _repositorioInmuebles = repositorioInmuebles;
             _repositorioTipoInmueble = repositorioTipoInmueble;
             _hostingEnvironment = hostingEnvironment;
+            _repositorioInquilino = repositorioInquilino;
         }
 
         // ruta: /api/Auth/login
@@ -112,10 +116,10 @@ namespace InmobiliariaConlara.Controllers.API
             return Ok(inmuebles);
         }
 
-        // ruta: /api/Auth/listarInmueblesCompletos
-        [HttpGet("listarInmueblesCompletos")]
+        // ruta: /api/Auth/verInmueble/{id}
+        [HttpGet("verInmueble/{id}")]
         [Authorize(Policy = "EsPropietarioApp")]
-        public IActionResult ListarInmueblesCompletos()
+        public IActionResult VerInmueble(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
@@ -123,11 +127,14 @@ namespace InmobiliariaConlara.Controllers.API
                 return Unauthorized();
             }
 
-            var idUsuario = Convert.ToInt32(userIdClaim.Value);
-            var inmuebles = _repositorioInmuebles.ObtenerInmueblesCompletosPorIdApi(idUsuario);
+            var inmueble = _repositorioInmuebles.ObtenerInmueblesCompletosPorIdApi(id);
 
-            return Ok(inmuebles);
+            if (inmueble == null)
+            {
+                return NotFound();
+            }
 
+            return Ok(inmueble);
         }
 
         //ruta: /api/Auth/Habilitacion
@@ -272,6 +279,78 @@ namespace InmobiliariaConlara.Controllers.API
                 return BadRequest();
             }
         }
-        
+
+        // ruta: /api/Auth/actualizarInmueble
+        [HttpPost("actualizarInmueble")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public async Task<IActionResult> ActualizarInmueble([FromForm] IFormFile? imagen, [FromForm] String inmuebleJson)
+        {
+            if (string.IsNullOrEmpty(inmuebleJson))
+            {
+                return BadRequest();
+            }
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                Inmuebles? inmueble = JsonSerializer.Deserialize<Inmuebles>(inmuebleJson, options);
+
+                if (inmueble == null)
+                {
+                    return BadRequest("El inmueble no es válido");
+                }
+
+                if (imagen != null)
+                {
+                    string wwwRootPath = _hostingEnvironment.WebRootPath;
+                    string uploadPath = Path.Combine(wwwRootPath, "Uploads");
+
+                    if (!Directory.Exists(uploadPath))
+                    {
+                        Directory.CreateDirectory(uploadPath);
+                    }
+
+                    string extension = Path.GetExtension(imagen.FileName);
+                    string nombreArchivoUnico = Guid.NewGuid().ToString() + extension;
+                    string filePath = Path.Combine(uploadPath, nombreArchivoUnico);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imagen.CopyToAsync(fileStream);
+                    }
+
+                    inmueble.ImagenUrl = $"/Uploads/{nombreArchivoUnico}";
+                }
+
+                var idUsuario = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                inmueble.IdUsuario = idUsuario;
+                _repositorioInmuebles.Modificacion(inmueble);
+                return Ok(inmueble);
+            }
+            catch
+            {
+                return BadRequest();
+            }
+        }
+
+        // ruta: /api/Auth/misInquilinos
+        [HttpGet("misInquilinos")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult misInquilinos()
+        {
+            try
+            {
+                var idPropietario = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var inquilinos = _repositorioInquilino.ObtenerInquilinosDePropietario(idPropietario);
+                return Ok(inquilinos);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

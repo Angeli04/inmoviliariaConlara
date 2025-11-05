@@ -16,6 +16,7 @@ builder.Services.AddSession();
 builder.Services.AddScoped<RepositorioUsuario>();
 builder.Services.AddScoped<RepositorioInmuebles>();
 builder.Services.AddScoped<RepositorioTipoInmueble>();
+builder.Services.AddScoped<RepositorioInquilino>();
 
 
 //Configuración de autenticación para Cookies (Web) y JWT (API)

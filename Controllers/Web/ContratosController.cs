@@ -3,6 +3,7 @@ using Inmobiliaria.Models;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace Inmobiliaria.Controllers;
     public class ContratosController : Controller
     {
@@ -66,7 +67,7 @@ namespace Inmobiliaria.Controllers;
 
 
         contrato.Existe = true;
-        contrato.UsuariAlta = int.Parse(User.FindFirst("UserId")?.Value);
+        contrato.UsuariAlta = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
         if (ModelState.IsValid)
         {

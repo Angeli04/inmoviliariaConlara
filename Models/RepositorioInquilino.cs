@@ -253,17 +253,59 @@ namespace Inmobiliaria.Models
                         }
 
         public int ContarInquilinos()
+        {
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                string sql = "SELECT COUNT(*) FROM inquilino WHERE existe=1";
+                using (var command = new MySqlCommand(sql, connection))
                 {
-                    using (var connection = new MySqlConnection(connectionString))
-                    {
-                        string sql = "SELECT COUNT(*) FROM inquilino WHERE existe=1";
-                        using (var command = new MySqlCommand(sql, connection))
-                        {
-                            connection.Open();
-                            return Convert.ToInt32(command.ExecuteScalar());
-                        }
-                    }
+                    connection.Open();
+                    return Convert.ToInt32(command.ExecuteScalar());
                 }
+            }
+        }
+                
+        public IList<InquilinoAlquilerDto> ObtenerInquilinosDePropietario(int idPropietario)
+        {
+            var res = new List<InquilinoAlquilerDto>();
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                string sql = @"SELECT 
+                        t.idInquilino, t.apellido, t.nombre, t.dni, t.telefono, t.eMail,
+                        i.Direccion AS DireccionInmueble
+                    FROM inquilino t
+                    JOIN contratos c ON t.idInquilino = c.idInquilino
+                    JOIN inmuebles i ON c.idInmuebles = i.IdInmuebles
+                    WHERE 
+                        i.IdUsuario = @idPropietario 
+                        AND c.vigente = 1
+                        AND t.existe = 1
+                    ORDER BY 
+                        t.apellido, t.nombre";
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@idPropietario", idPropietario);
+                    connection.Open();
+                    var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var dto = new InquilinoAlquilerDto
+                        {
+                            IdInquilino = reader.GetInt32("idInquilino"),
+                            Apellido = reader.GetString("apellido"),
+                            Nombre = reader.GetString("nombre"),
+                            Dni = reader.GetString("dni"),
+                            Telefono = reader.GetString("telefono"),
+                            Email = reader.GetString("eMail"),
+                            DireccionInmueble = reader.GetString("DireccionInmueble")
+                        };
+                        res.Add(dto);
+                    }
+                    connection.Close();
+                }
+                return res;
+            }
+        }
     }    
     
 }
