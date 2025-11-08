@@ -281,26 +281,23 @@ namespace Inmobiliaria.Models
             using (var connection = new MySqlConnection(connectionString))
             {
                 string sql = @"SELECT p.IdPagos, 
-       p.idContratos, 
-       p.fechaPago, 
-       p.importe,
-       p.concepto,
-       p.numeroCuota,
-       p.mesPago,
-       ua.Email AS EmailUsuarioAlta,
-       ub.Email AS EmailUsuarioBaja,
-       i.Direccion AS DireccionInmueble
-FROM pagos p
-INNER JOIN contratos c ON p.idContratos = c.IdContrato
-INNER JOIN inmuebles i ON c.IdInmuebles = i.idInmuebles
-LEFT JOIN Usuario ua ON ua.IdUsuario = p.UsuarioAlta
-LEFT JOIN Usuario ub ON ub.IdUsuario = p.UsuarioBaja
-WHERE p.fechaPago IS NOT NULL 
-  AND p.fechaPago != '0000-00-00'
-ORDER BY p.idPagos;
-
-
-                        ";
+                        p.idContratos, 
+                        p.fechaPago, 
+                        p.importe,
+                        p.concepto,
+                        p.numeroCuota,
+                        p.mesPago,
+                        ua.Email AS EmailUsuarioAlta,
+                        ub.Email AS EmailUsuarioBaja,
+                        i.Direccion AS DireccionInmueble
+                    FROM pagos p
+                    INNER JOIN contratos c ON p.idContratos = c.IdContrato
+                    INNER JOIN inmuebles i ON c.IdInmuebles = i.idInmuebles
+                    LEFT JOIN Usuario ua ON ua.IdUsuario = p.UsuarioAlta
+                    LEFT JOIN Usuario ub ON ub.IdUsuario = p.UsuarioBaja
+                    WHERE p.fechaPago IS NOT NULL 
+                    AND p.fechaPago != '0000-00-00'
+                    ORDER BY p.idPagos;";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -320,7 +317,7 @@ ORDER BY p.idPagos;
                             MesPago = Convert.ToInt32(reader["mesPago"]),
                             mailUsuarioAlta = Convert.ToString(reader["EmailUsuarioAlta"]),
                             mailUsuarioBaja = Convert.ToString(reader["EmailUsuarioBaja"])
-                            
+
                         };
 
                         res.Add(pago);
@@ -331,5 +328,57 @@ ORDER BY p.idPagos;
             return res;
         }
 
+
+
+        public List<Pagos> ObtenerPagosPorContrato(int idContrato) 
+        {
+            var lista = new List<Pagos>(); // Devuelve una lista de 'Pagos' (plural)
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                // Esta es la consulta SQL que tú proporcionaste (corregida)
+                string sql = @"SELECT 
+                                p.idPagos, p.idContratos, p.fechaPago, p.importe, 
+                                p.concepto, p.numeroCuota, p.mesPago, p.existe
+                           FROM pagos p
+                           WHERE p.idContratos = @idContratos AND p.existe = 1
+                           ORDER BY p.numeroCuota ASC"; 
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    // Usa el nombre de parámetro correcto
+                    command.Parameters.AddWithValue("@idContratos", idContrato);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            // Crea un nuevo objeto 'Pagos' (plural)
+                            lista.Add(new Pagos
+                            {
+                                IdPagos = reader.GetInt32("idPagos"),
+                                IdContratos = reader.GetInt32("idContratos"),
+                                FechaPago = reader.GetDateTime("fechaPago"),
+                                Importe = reader.GetDecimal("importe"),
+                                Concepto = reader.IsDBNull(reader.GetOrdinal("concepto")) ? null : reader.GetString("concepto"),
+                                NumeroCuota = reader.GetInt32("numeroCuota"),
+                                MesPago = reader.GetInt32("mesPago"),
+                                Existe = reader.GetBoolean("existe")
+                                
+                                // Nota: Los otros campos de tu clase Pagos.cs 
+                                // (como UsuariAlta, mailUsuarioAlta, etc.)
+                                // no se rellenan aquí porque no los pedimos en el SQL,
+                                // y la app de Android no los necesita.
+                            });
+                        }
+                    }
+                }
+            }
+            return lista;
+        }
     }
 }
+    
+
+        
+    
+

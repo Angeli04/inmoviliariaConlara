@@ -393,14 +393,56 @@ namespace Inmobiliaria.Models
 
                 connection.Open();
                 resultado = Convert.ToInt32(cmd.ExecuteScalar());
-
-            
-
             }
-             return resultado;
-           
-        }    
-        
+            return resultado;
+
+        }  
+
+        public IList<ContratoDetalleDto> ObtenerContratosVigentesApi(int idPropietario)
+        {
+            var lista = new List<ContratoDetalleDto>();
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                string sql = @"SELECT 
+                                c.idContrato, c.monto, c.fechaDesde, c.fechaHasta, c.vigente, 
+                                c.cantidadCuotas,
+                                CONCAT(t.apellido, ', ', t.nombre) AS NombreInquilino,
+                                i.Direccion AS DireccionInmueble
+                           FROM contratos c
+                           JOIN inquilino t ON c.idInquilino = t.idInquilino
+                           JOIN inmuebles i ON c.idInmuebles = i.IdInmuebles
+                           WHERE i.IdUsuario = @idPropietario AND c.existe = 1
+                           ORDER BY c.fechaDesde DESC";
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@idPropietario", idPropietario);
+                    connection.Open();
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var res = new List<Contratos>();
+                        while (reader.Read())
+                        {
+                            lista.Add(new ContratoDetalleDto
+                            {
+                                IdContrato = Convert.ToInt32(reader["idContrato"]),
+                                Monto = reader.GetDecimal("monto"),
+                                FechaDesde = reader.GetDateTime("fechaDesde"),
+                                FechaHasta = reader.GetDateTime("fechaHasta"),
+                                Vigente = reader.GetInt32("vigente"),
+                                CantidadCuotas = reader.GetInt32("cantidadCuotas"),
+                                NombreInquilino = reader.GetString("NombreInquilino"),
+                                DireccionInmueble = reader.GetString("DireccionInmueble")
+                            });
+                        }
+                        connection.Close();
+                    }
+                }
+            }
+            return lista;
+        }  
+    
     }
     
 }

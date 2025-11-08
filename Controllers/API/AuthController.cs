@@ -13,7 +13,7 @@ namespace InmobiliariaConlara.Controllers.API
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase 
+    public class AuthController : ControllerBase
     {
         private readonly RepositorioUsuario _repositorioUsuario;
         private readonly IConfiguration _configuration;
@@ -26,11 +26,17 @@ namespace InmobiliariaConlara.Controllers.API
 
         private readonly RepositorioInquilino _repositorioInquilino;
 
+        private readonly RepositorioContratos _repositorioContratos;
+
+        private readonly RepositorioPagos _repositorioPagos;
 
 
 
 
-        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment, RepositorioInquilino repositorioInquilino)
+
+
+
+        public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment, RepositorioInquilino repositorioInquilino, RepositorioContratos repositorioContratos, RepositorioPagos repositorioPagos)
         {
             _repositorioUsuario = repositorioUsuario;
             _configuration = configuration;
@@ -38,6 +44,9 @@ namespace InmobiliariaConlara.Controllers.API
             _repositorioTipoInmueble = repositorioTipoInmueble;
             _hostingEnvironment = hostingEnvironment;
             _repositorioInquilino = repositorioInquilino;
+            _repositorioContratos = repositorioContratos;
+            _repositorioPagos = repositorioPagos;
+
         }
 
         // ruta: /api/Auth/login
@@ -347,10 +356,52 @@ namespace InmobiliariaConlara.Controllers.API
                 var inquilinos = _repositorioInquilino.ObtenerInquilinosDePropietario(idPropietario);
                 return Ok(inquilinos);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
         }
+
+
+        // ruta: /api/Auth/contratosVigentes
+        [HttpGet("contratosVigentes")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult ContratosVigentes()
+        {
+            try
+            {
+                var idPropietario = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var contratos = _repositorioContratos.ObtenerContratosVigentesApi(idPropietario);
+                return Ok(contratos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        // ruta: api/Auth/porcontrato/{idContrato}
+        [HttpGet("porcontrato/{idContrato}")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult PorContrato(int idContrato)
+        {
+            try
+            {
+                var idPropietario = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var contrato = _repositorioContratos.ObtenerPorId(idContrato);
+                if (contrato == null)
+                {
+                    return Forbid("No tiene permisos para ver este contrato");
+                }
+                var pagos = _repositorioPagos.ObtenerPagosPorContrato(idContrato);
+                return Ok(pagos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+        }
+
     }
 }
