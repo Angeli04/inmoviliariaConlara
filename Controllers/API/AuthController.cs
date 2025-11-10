@@ -30,12 +30,6 @@ namespace InmobiliariaConlara.Controllers.API
 
         private readonly RepositorioPagos _repositorioPagos;
 
-
-
-
-
-
-
         public AuthController(RepositorioUsuario repositorioUsuario, IConfiguration configuration, RepositorioInmuebles repositorioInmuebles, RepositorioTipoInmueble repositorioTipoInmueble, IWebHostEnvironment hostingEnvironment, RepositorioInquilino repositorioInquilino, RepositorioContratos repositorioContratos, RepositorioPagos repositorioPagos)
         {
             _repositorioUsuario = repositorioUsuario;
@@ -151,11 +145,26 @@ namespace InmobiliariaConlara.Controllers.API
         [Authorize(Policy = "EsPropietarioApp")]
         public IActionResult Habilitacion([FromBody] Inmuebles inmueble)
         {
+
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+            var idPropietario = Convert.ToInt32(userIdClaim.Value);
+
+
             bool habilitado = inmueble.Habilitado;
+            int idInmueble = inmueble.IdInmuebles;
 
-            int id = inmueble.IdInmuebles;
-            Inmuebles inmuebleActualizado = _repositorioInmuebles.Habilitar(id, habilitado);
 
+            Inmuebles inmuebleActualizado = _repositorioInmuebles.Habilitar(idInmueble, habilitado, idPropietario);
+
+
+            if (inmuebleActualizado == null)
+            {
+                return NotFound(new { message = "No se encontró el inmueble o no tiene permisos sobre él." });
+            }
 
             return Ok(inmuebleActualizado);
         }
@@ -280,6 +289,7 @@ namespace InmobiliariaConlara.Controllers.API
                 var idUsuario = Convert.ToInt32(User.FindFirst(ClaimTypes.NameIdentifier).Value);
                 inmueble.IdUsuario = idUsuario;
                 int idCreado = _repositorioInmuebles.Alta(inmueble);
+                inmueble.Habilitado = false;
                 inmueble.IdInmuebles = idCreado;
                 return Ok(inmueble);
             }
@@ -402,6 +412,44 @@ namespace InmobiliariaConlara.Controllers.API
             }
 
         }
+
+
+        // ruta: /api/Auth/cambiar-clave
+        [HttpPut("cambiar-clave")]
+        [Authorize(Policy = "EsPropietarioApp")]
+        public IActionResult CambiarClave([FromBody] CambioClaveRequest request)
+        {
+            try
+            {
+        
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized();
+                }
+                var idUsuario = Convert.ToInt32(userIdClaim.Value);
+                bool exito = _repositorioUsuario.CambiarClave(
+                    idUsuario, 
+                    request.ClaveActual, 
+                    request.ClaveNueva
+                );
+
+                if (exito)
+                {
+                    return Ok(new { message = "Contraseña actualizada correctamente." });
+                }
+                else
+                {
+
+                    return BadRequest(new { message = "La contraseña actual es incorrecta." });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Ocurrió un error inesperado.", error = ex.Message });
+            }
+        }
+
 
     }
 }

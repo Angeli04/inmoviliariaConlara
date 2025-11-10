@@ -396,7 +396,7 @@ namespace Inmobiliaria.Models
             }
             return resultado;
 
-        }  
+        }
 
         public IList<ContratoDetalleDto> ObtenerContratosVigentesApi(int idPropietario)
         {
@@ -441,8 +441,7 @@ namespace Inmobiliaria.Models
                 }
             }
             return lista;
-        }  
-    
+        }
     }
     
 }

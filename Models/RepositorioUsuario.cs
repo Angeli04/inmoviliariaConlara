@@ -129,36 +129,36 @@ namespace InmobiliariaConlara.Models
         }
 
         public int ActualizarPerfilDesdeApp(Usuario usuario)
-    {
-        int resultado = -1;
-        using (var connection = new MySqlConnection(connectionString)) // Usa tu cadena de conexión
         {
-            // La consulta SQL solo actualiza los campos que nos interesan.
-            // Ignoramos 'Clave', 'Rol', 'Dni', etc.
-            string sql = @"UPDATE usuario 
+            int resultado = -1;
+            using (var connection = new MySqlConnection(connectionString)) // Usa tu cadena de conexión
+            {
+                // La consulta SQL solo actualiza los campos que nos interesan.
+                // Ignoramos 'Clave', 'Rol', 'Dni', etc.
+                string sql = @"UPDATE usuario 
                            SET nombre = @nombre, 
                                apellido = @apellido, 
                                telefono = @telefono, 
                                eMail = @email,
                                dni = @dni
                            WHERE idUsuario = @idUsuario";
-            
-            using (var command = new MySqlCommand(sql, connection))
-            {
-                command.Parameters.AddWithValue("@nombre", usuario.Nombre);
-                command.Parameters.AddWithValue("@apellido", usuario.Apellido);
-                command.Parameters.AddWithValue("@telefono", usuario.Telefono);
-                command.Parameters.AddWithValue("@email", usuario.Email);
-                command.Parameters.AddWithValue("@dni", usuario.Dni);
-                command.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
-                
-                connection.Open();
-                resultado = command.ExecuteNonQuery();
-                connection.Close();
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@nombre", usuario.Nombre);
+                    command.Parameters.AddWithValue("@apellido", usuario.Apellido);
+                    command.Parameters.AddWithValue("@telefono", usuario.Telefono);
+                    command.Parameters.AddWithValue("@email", usuario.Email);
+                    command.Parameters.AddWithValue("@dni", usuario.Dni);
+                    command.Parameters.AddWithValue("@idUsuario", usuario.IdUsuario);
+
+                    connection.Open();
+                    resultado = command.ExecuteNonQuery();
+                    connection.Close();
+                }
             }
+            return resultado;
         }
-        return resultado;
-    }
 
         // <-- NUEVO MÉTODO ESENCIAL -->
         public IList<Usuario> ObtenerPropietarios()
@@ -313,10 +313,6 @@ namespace InmobiliariaConlara.Models
             }
             return u;
         }
-
-        // metodo para destruir el token, logout.
-        
-
         public IList<Usuario> BuscarPropietariosPorFraccionNombre(string term)
         {
             IList<Usuario> res = new List<Usuario>();
@@ -346,6 +342,71 @@ namespace InmobiliariaConlara.Models
                 }
             }
             return res;
+        }
+
+        public bool CambiarClave(int idUsuario, string claveActual, string claveNueva)
+        {
+
+            byte[] saltBytes = Encoding.UTF8.GetBytes("MiSaltSecreto123");
+
+            string hashActualDb;
+
+            using (var connection = new MySqlConnection(connectionString))
+            {
+                var sqlGet = "SELECT Clave FROM usuario WHERE idUsuario = @idUsuario";
+                using (var command = new MySqlCommand(sqlGet, connection))
+                {
+                    command.Parameters.AddWithValue("@idUsuario", idUsuario);
+                    connection.Open();
+                    
+                    hashActualDb = (string)command.ExecuteScalar();
+                    
+                    connection.Close();
+
+                    if (string.IsNullOrEmpty(hashActualDb))
+                    {
+                        return false; 
+                    }
+                }
+
+                string hashAValidar = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: claveActual,
+                    salt: saltBytes,
+                    prf: KeyDerivationPrf.HMACSHA1,
+                    iterationCount: 10000,
+                    numBytesRequested: 256 / 8
+                ));
+
+
+                if (hashAValidar != hashActualDb)
+                {
+
+                    return false;
+                }
+
+
+                
+                string nuevoHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: claveNueva,
+                    salt: saltBytes,
+                    prf: KeyDerivationPrf.HMACSHA1,
+                    iterationCount: 10000,
+                    numBytesRequested: 256 / 8
+                ));
+
+                var sqlUpdate = "UPDATE usuario SET clave = @nuevoHash WHERE idUsuario = @idUsuario";
+                using (var command = new MySqlCommand(sqlUpdate, connection))
+                {
+                    command.Parameters.AddWithValue("@nuevoHash", nuevoHash);
+                    command.Parameters.AddWithValue("@idUsuario", idUsuario);
+                    
+                    connection.Open();
+                    int filasAfectadas = command.ExecuteNonQuery();
+                    connection.Close();
+                    
+                    return filasAfectadas > 0;
+                }
+            }
         }
 
     }

@@ -508,21 +508,38 @@ public List<Inmuebles> ObtenerInmueblesCompletosPorPropietario(int idPropietario
         }
 
         
-        public Inmuebles Habilitar(int id, bool habilitado){
+        // 1. Agrega idPropietario a los parámetros
+        public Inmuebles Habilitar(int id, bool habilitado, int idPropietario)
+        {
+            int filasAfectadas = 0;
             using (var connection = new MySqlConnection(connectionString))
             {
-                String sql = @"UPDATE Inmuebles SET Habilitado = @habilitado WHERE IdInmuebles = @id";
+                // 2. Agrega la validación de pertenencia al SQL
+                String sql = @"UPDATE Inmuebles 
+                            SET Habilitado = @habilitado 
+                            WHERE IdInmuebles = @id AND IdPropietario = @idPropietario";
+                
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
                     command.Parameters.AddWithValue("@habilitado", habilitado);
+                    // 3. Añade el nuevo parámetro
+                    command.Parameters.AddWithValue("@idPropietario", idPropietario); 
+                    
                     connection.Open();
-                    command.ExecuteNonQuery();
+                    filasAfectadas = command.ExecuteNonQuery(); // Guardamos cuántas filas se actualizaron
                     connection.Close();
                 }
             }
-            Inmuebles inmueble = ObtenerPorId(id);
-            return inmueble;
+
+            // 4. (Recomendado) Solo devuelve el inmueble si la actualización fue exitosa
+            if (filasAfectadas > 0)
+            {
+                Inmuebles inmueble = ObtenerPorId(id);
+                return inmueble;
+            }
+            
+            return null; // Si no se actualizó nada (porque no le pertenece), devuelve null
         }
     }
 }
